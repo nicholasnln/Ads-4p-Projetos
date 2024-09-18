@@ -5,52 +5,57 @@ import org.springframework.stereotype.Service;
 
 import com.app.urna.entity.Eleitor;
 import com.app.urna.repository.EleitorRepository;
+import com.urnavirtual.app.enums.StatusEleitor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class EleitorService {
-	@Autowired
+    @Autowired
     private EleitorRepository eleitorRepository;
 
-    public Eleitor salvar(Eleitor eleitor) {
-        if (eleitor.getCpf() == null || eleitor.getEmail() == null) {
-            eleitor.setStatus(StatusEleitor.PENDENTE);
-        } else {
+    public String save(Eleitor eleitor) {
+        if (eleitor.getEmail() != null && eleitor.getCpf() != null) {
             eleitor.setStatus(StatusEleitor.APTO);
+        } else if (eleitor.getEmail()  == null || eleitor.getCpf() == null ) {
+            eleitor.setStatus(StatusEleitor.PENDENTE);
         }
-        return eleitorRepository.save(eleitor);
+
+        this.eleitorRepository.save(eleitor);
+        return "Eleitor salvo\n" +  eleitor.toString();
     }
 
-    public List<Eleitor> listarAtivos() {
-        return eleitorRepository.findAllByStatusNot(StatusEleitor.INATIVO);
+    public List<Eleitor> findAll() {
+        return this.eleitorRepository.findAll();
     }
 
-    public Optional<Eleitor> buscarPorId(Long id) {
-        return eleitorRepository.findById(id);
-    }
-
-    public Eleitor atualizar(Long id, Eleitor eleitorAtualizado) throws Exception {
-        Eleitor existente = buscarPorId(id).orElseThrow(() -> new Exception("Eleitor não encontrado"));
-        // Atualizar campos conforme necessário
-        existente.setNomeCompleto(eleitorAtualizado.getNomeCompleto());
-        existente.setCpf(eleitorAtualizado.getCpf());
-        existente.setProfissao(eleitorAtualizado.getProfissao());
-        existente.setTelefoneCelular(eleitorAtualizado.getTelefoneCelular());
-        existente.setTelefoneFixo(eleitorAtualizado.getTelefoneFixo());
-        existente.setEmail(eleitorAtualizado.getEmail());
-        if (eleitorAtualizado.getCpf() == null || eleitorAtualizado.getEmail() == null) {
-            existente.setStatus(StatusEleitor.PENDENTE);
-        } else {
-            existente.setStatus(StatusEleitor.APTO);
-        }
-        return eleitorRepository.save(existente);
-    }
-
-    public void deletar(Long id) throws Exception {
-        Eleitor eleitor = buscarPorId(id).orElseThrow(() -> new Exception("Eleitor não encontrado"));
-        if (eleitor.getStatus() == StatusEleitor.VOTOU) {
-            throw new Exception("Usuário já votou. Não foi possível inativá-lo");
-        }
+    public String delete(Long id) {
+        Eleitor eleitor = this.eleitorRepository.findById(id).get();
         eleitor.setStatus(StatusEleitor.INATIVO);
-        eleitorRepository.save(eleitor);
+
+        this.eleitorRepository.save(eleitor);
+
+        return "Eleitor inativado\n" + eleitor.toString();
+    }
+
+    public List<Eleitor> findAllActives() {
+        List<Eleitor> allEleitores = eleitorRepository.findAll();
+        List<Eleitor> eleitoresAtivos = new ArrayList<>();
+
+        allEleitores.forEach(eleitor -> {
+            if (eleitor.getStatus() != StatusEleitor.INATIVO) {
+                eleitoresAtivos.add(eleitor);
+            }
+        });
+
+        return eleitoresAtivos;
+    }
+
+    public String update(Long id, Eleitor eleitor) throws Exception {
+        eleitor.setId(id);
+
+        this.save(eleitor);
+        return "Eleitor atualizado\n" + this.eleitorRepository.findById(id);
     }
 }

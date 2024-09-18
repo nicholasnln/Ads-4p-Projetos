@@ -1,12 +1,9 @@
 package com.app.urna.entity;
 
 import com.urnavirtual.app.enums.StatusCandidato;
-import com.urnavirtual.app.enums.StatusEleitor;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import org.hibernate.validator.constraints.br.CPF;
 
@@ -16,7 +13,8 @@ import org.hibernate.validator.constraints.br.CPF;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-public class Eleitor {
+@Builder
+public class Candidato {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -27,19 +25,15 @@ public class Eleitor {
     @CPF
     private String cpf;
 
-    @NotBlank
-    private String profissao;
+    @Column(unique = true, nullable = false)
+    private Long numero;
 
-    @Pattern(regexp = "^\\d{2} 9\\d{4}-\\d{4}$", message = "Telefone Celular inválido!")
-    @NotBlank
-    private String telefone_celular;
-
-    @Pattern(regexp = "^\\d{2} 9\\d{4}-\\d{4}$", message = "Telefone Fixo inválido!")
-    private String telefone_fixo;
-
-    @Email
-    private String email;
+    @NotNull
+    private String funcao;
 
     @Enumerated(EnumType.STRING)
-    private StatusEleitor status;
+    private StatusCandidato status;
+
+    @Transient
+    private Long votos_apurados;
 }
